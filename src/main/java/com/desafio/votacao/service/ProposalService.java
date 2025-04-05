@@ -98,6 +98,24 @@ public class ProposalService {
         return toResponseDto(proposal);
     }
 
+
+    public ProposalResponseDto closeVoting(Long proposalId) {
+        Proposal proposal = proposalRepository.findById(proposalId)
+                .orElseThrow(() -> new RuntimeException("Proposal not found"));
+
+        if (proposal.getEndVotation().isAfter(LocalDateTime.now())) {
+            proposal.setEndVotation(LocalDateTime.now()); // Encerra a votação imediatamente
+        }
+
+        // Contabiliza votos (exemplo simplificado)
+        String result = proposal.getYesVotes() >= proposal.getNoVotes() ? "APPROVED" : "REJECTED";
+        proposal.setResult(result);
+
+        proposalRepository.save(proposal);
+        return toResponseDto(proposal);
+    }
+
+
     private ProposalResponseDto toResponseDto(Proposal proposal) {
         return ProposalResponseDto.builder()
                 .id(proposal.getId())
