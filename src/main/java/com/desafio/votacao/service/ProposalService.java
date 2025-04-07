@@ -3,6 +3,7 @@ package com.desafio.votacao.service;
 
 import com.desafio.votacao.Data.Dtos.ProposalRequestDto;
 import com.desafio.votacao.Data.Dtos.ProposalResponseDto;
+import com.desafio.votacao.Data.Dtos.ProposalStatusResponse;
 import com.desafio.votacao.Data.Dtos.VoteRequestDto;
 import com.desafio.votacao.Data.Entity.Proposal;
 import com.desafio.votacao.Data.Entity.Vote;
@@ -10,6 +11,9 @@ import com.desafio.votacao.Data.Enums.StatusEnum;
 import com.desafio.votacao.Data.Enums.VoteValue;
 import com.desafio.votacao.Data.Repository.ProposalRepository;
 import com.desafio.votacao.Data.Repository.VoteRepository;
+import com.desafio.votacao.exception.DuplicateProposalException;
+import com.desafio.votacao.exception.ProposalDeclinedException;
+import com.desafio.votacao.service.client.ProposalValidatorClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +29,21 @@ public class ProposalService {
     @Autowired
     private VoteRepository voteRepository;
 
+    @Autowired
+    private ProposalValidatorClient validatorClient;
+
     private static final Logger log = LoggerFactory.getLogger(ProposalService.class);
 
     public ProposalResponseDto createProposal(ProposalRequestDto proposalRequestDto) {
+        ProposalStatusResponse resp = validatorClient.validateProposal();
+        if ("DECLINED".equalsIgnoreCase(resp.getStatus())) {
+            throw new ProposalDeclinedException("Proposta recusada pela análise externa.");
+        }
+
+        if (isDuplicateClosedProposal(proposalRequestDto.getTitle())) {
+            throw new DuplicateProposalException(proposalRequestDto.getTitle());
+        }
+
         Proposal proposal = Proposal.builder()
                 .title(proposalRequestDto.getTitle())
                 .description(proposalRequestDto.getDescription())
@@ -58,11 +74,6 @@ public class ProposalService {
 
     public void castVote(Long proposalId, VoteRequestDto dto) {
         Proposal proposal = proposalRepository.findById(proposalId).orElseThrow();
-
-        if (!proposal.getStatus().equals(StatusEnum.OPEN) ||
-                LocalDateTime.now().isAfter(proposal.getEndVotation())) {
-            throw new IllegalStateException("Voting session is not open or has expired.");
-        }
 
         voteRepository.findByAssociateIdAndProposalId(dto.getAssociateId(), proposalId)
                 .ifPresent(v -> { throw new IllegalArgumentException("Associate already voted."); });
@@ -129,6 +140,13 @@ public class ProposalService {
                 .noVotes(proposal.getNoVotes())
                 .result(proposal.getResult())
                 .build();
+    }
+
+    private boolean isDuplicateClosedProposal(String title) {
+        return proposalRepository
+                .findByTitleIgnoreCaseAndStatus(title, StatusEnum.CLOSED)
+                .stream()
+                .anyMatch(p -> !"Pending".equalsIgnoreCase(p.getResult()));
     }
 
 
