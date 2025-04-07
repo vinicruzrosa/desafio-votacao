@@ -16,23 +16,25 @@ import com.desafio.votacao.exception.ProposalDeclinedException;
 import com.desafio.votacao.service.client.ProposalValidatorClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
 @Service
 public class ProposalService {
-    @Autowired
-    private ProposalRepository proposalRepository;
+    private final ProposalRepository proposalRepository;
 
-    @Autowired
-    private VoteRepository voteRepository;
+    private final VoteRepository voteRepository;
 
-    @Autowired
-    private ProposalValidatorClient validatorClient;
+    private final ProposalValidatorClient validatorClient;
 
     private static final Logger log = LoggerFactory.getLogger(ProposalService.class);
+
+    public ProposalService(ProposalValidatorClient validatorClient, ProposalRepository proposalRepository, VoteRepository voteRepository) {
+        this.validatorClient = validatorClient;
+        this.proposalRepository = proposalRepository;
+        this.voteRepository = voteRepository;
+    }
 
     public ProposalResponseDto createProposal(ProposalRequestDto proposalRequestDto) {
         ProposalStatusResponse resp = validatorClient.validateProposal();
