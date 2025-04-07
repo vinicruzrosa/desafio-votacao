@@ -1,4 +1,4 @@
-package com.desafio.votacao.service.client;
+package com.desafio.votacao.client;
 
 import com.desafio.votacao.Data.Dtos.ProposalStatusResponse;
 import org.springframework.stereotype.Component;

@@ -13,7 +13,7 @@ import com.desafio.votacao.Data.Repository.ProposalRepository;
 import com.desafio.votacao.Data.Repository.VoteRepository;
 import com.desafio.votacao.exception.DuplicateProposalException;
 import com.desafio.votacao.exception.ProposalDeclinedException;
-import com.desafio.votacao.service.client.ProposalValidatorClient;
+import com.desafio.votacao.client.ProposalValidatorClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -108,23 +108,6 @@ public class ProposalService {
 
         proposalRepository.save(proposal);
         log.info("Voting session closed for proposal {}. Result: {}", id, result);
-        return toResponseDto(proposal);
-    }
-
-
-    public ProposalResponseDto closeVoting(Long proposalId) {
-        Proposal proposal = proposalRepository.findById(proposalId)
-                .orElseThrow(() -> new RuntimeException("Proposal not found"));
-
-        if (proposal.getEndVotation().isAfter(LocalDateTime.now())) {
-            proposal.setEndVotation(LocalDateTime.now()); // Encerra a votação imediatamente
-        }
-
-        // Contabiliza votos (exemplo simplificado)
-        String result = proposal.getYesVotes() >= proposal.getNoVotes() ? "APPROVED" : "REJECTED";
-        proposal.setResult(result);
-
-        proposalRepository.save(proposal);
         return toResponseDto(proposal);
     }
 

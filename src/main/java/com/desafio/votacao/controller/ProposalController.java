@@ -19,7 +19,7 @@ public class ProposalController {
     }
 
     @PostMapping
-    private ResponseEntity<ProposalResponseDto> post(@RequestBody ProposalRequestDto requestDto) {
+    public ResponseEntity<ProposalResponseDto> createProposal(@RequestBody ProposalRequestDto requestDto) {
         ProposalResponseDto proposalResponse = proposalService.createProposal(requestDto);
         return new ResponseEntity<>(proposalResponse, HttpStatus.CREATED);
     }
@@ -39,12 +39,6 @@ public class ProposalController {
     @GetMapping("/{id}/result")
     public ResponseEntity<ProposalResponseDto> getResult(@PathVariable Long id) {
         return ResponseEntity.ok(proposalService.closeVotingAndGetResult(id));
-    }
-
-    @PutMapping("/{id}/close")
-    public ResponseEntity<ProposalResponseDto> closeVoting(@PathVariable Long id) {
-        ProposalResponseDto closedProposal = proposalService.closeVoting(id);
-        return ResponseEntity.ok(closedProposal);
     }
 
 }
